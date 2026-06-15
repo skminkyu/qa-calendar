@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QA 캘린더 자동 작성 시스템</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- 상단 툴바 -->
+<div id="toolbar">
+  <div class="toolbar-left">
+    <span class="app-title">📋 QA 캘린더 작성 시스템</span>
+  </div>
+  <div class="toolbar-right">
+    <button id="btn-autofill" class="btn btn-primary" onclick="openAutofillModal()">
+      ⚡ 자동 기재
+    </button>
+    <button id="btn-export" class="btn btn-success" onclick="exportPPTX()">
+      ⬇ PPTX 내보내기
+    </button>
+  </div>
+</div>
+
+<!-- 탭 네비게이션 -->
+<div id="tab-nav">
+  <button class="tab-btn active" onclick="showTab('slide1')">슬라이드 1 · 연간 운영 캘린더</button>
+  <button class="tab-btn" onclick="showTab('slide2')">슬라이드 2 · 상품 진행이슈</button>
+</div>
+
+<!-- 슬라이드 1: 연간 운영 캘린더 -->
+<div id="tab-slide1" class="tab-content active">
+  <div class="slide-container">
+    <div class="slide-title-bar">26년 품질관리팀 운영 캘린더</div>
+    <div class="table-scroll">
+      <table id="calendar-table" class="qa-table">
+        <colgroup>
+          <col style="width:52px">  <!-- 구분1 -->
+          <col style="width:40px">  <!-- 구분2 -->
+          <col style="width:34px">  <!-- 구분3 -->
+          <col style="width:60px">  <!-- 구분4(상품/현장/모니터링) -->
+          <!-- 12개월 -->
+          <col style="width:140px"><col style="width:140px"><col style="width:140px">
+          <col style="width:140px"><col style="width:140px"><col style="width:140px">
+          <col style="width:140px"><col style="width:140px"><col style="width:140px">
+          <col style="width:140px"><col style="width:140px"><col style="width:140px">
+        </colgroup>
+        <tbody id="calendar-tbody">
+          <!-- 자바스크립트로 렌더링 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 슬라이드 2: 상품 진행이슈 -->
+<div id="tab-slide2" class="tab-content">
+  <div class="slide-container">
+    <div class="slide-title-bar">26년 품질관리팀 상품 진행이슈</div>
+    <div class="table-scroll">
+      <table id="issues-table" class="qa-table">
+        <colgroup>
+          <col style="width:70px">  <!-- 구분1 -->
+          <col style="width:55px">  <!-- 구분2 -->
+          <!-- 12개월 -->
+          <col style="width:165px"><col style="width:165px"><col style="width:165px">
+          <col style="width:165px"><col style="width:165px"><col style="width:165px">
+          <col style="width:165px"><col style="width:165px"><col style="width:165px">
+          <col style="width:165px"><col style="width:165px"><col style="width:165px">
+        </colgroup>
+        <tbody id="issues-tbody">
+          <!-- 자바스크립트로 렌더링 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- 자동 기재 모달 -->
+<div id="modal-autofill" class="modal-overlay" style="display:none">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>⚡ 자동 기재 설정</h3>
+      <button class="modal-close" onclick="closeAutofillModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="file-upload-grid">
+        <div class="upload-item">
+          <label>기획점검 계획안 HTML</label>
+          <input type="file" id="file-plan-inspection" accept=".html,.htm">
+          <span class="upload-hint">f1990c28 형식의 기획점검 HTML</span>
+        </div>
+        <div class="upload-item">
+          <label>모니터링 계획안 HTML</label>
+          <input type="file" id="file-plan-monitoring" accept=".html,.htm">
+          <span class="upload-hint">869729e5 형식의 모니터링 HTML</span>
+        </div>
+        <div class="upload-item">
+          <label>Key Metric HTML</label>
+          <input type="file" id="file-keymetric" accept=".html,.htm">
+          <span class="upload-hint">bf3e75d7 형식의 키메트릭 HTML</span>
+        </div>
+        <div class="upload-item">
+          <label>바이위클리 PPTX (복수 선택 가능)</label>
+          <input type="file" id="file-biweekly" accept=".pptx" multiple>
+          <span class="upload-hint">Biweekly_XXXXXX.pptx 파일들</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAutofillModal()">취소</button>
+      <button class="btn btn-primary" onclick="runAutofill()">자동 기재 실행</button>
+    </div>
+  </div>
+</div>
+
+<!-- 로딩 오버레이 -->
+<div id="loading" style="display:none">
+  <div class="loading-inner">
+    <div class="spinner"></div>
+    <p id="loading-msg">처리 중...</p>
+  </div>
+</div>
+
+<!-- 셀 편집 모달 -->
+<div id="modal-edit" class="modal-overlay" style="display:none">
+  <div class="modal-box modal-edit-box">
+    <div class="modal-header">
+      <h3 id="edit-modal-title">셀 편집</h3>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="edit-textarea" rows="12" placeholder="내용을 입력하세요..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+      <button class="btn btn-danger" onclick="clearCell()">지우기</button>
+      <button class="btn btn-primary" onclick="saveCell()">저장</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/data.js"></script>
+<script src="/static/js/render.js"></script>
+<script src="/static/js/app.js"></script>
+</body>
+</html>
